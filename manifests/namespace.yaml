@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dagster
+  annotations:
+    description: "Dagster deployments namespace"
+    created-by: "kustomize-deployment"

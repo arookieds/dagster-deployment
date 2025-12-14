@@ -1,0 +1,102 @@
+# Dagster instance deployment to kubernetes, using helm chart overwrite via kustomization
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: dagster
+
+resources:
+  - namespace.yaml
+  - dagster-instance-configmap.yaml
+  - ingressroute.yaml
+  - sealed-secrets/dagster-secrets-sealed.yaml
+
+helmCharts:
+  - name: dagster
+    repo: https://dagster-io.github.io/helm
+    version: 1.12.6
+    releaseName: dagster
+    namespace: dagster
+    valuesInline:
+      global:
+        postgresqlSecretName: "postgres-secrets"
+        dagsterInstanceConfigMap: dagster-instance
+
+      generatePostgresqlPasswordSecret: false
+
+      dagster-user-deployments:
+        enable: false
+        deployments: []
+
+      dagster-webserver:
+        env:
+          - name: DAGSTER_PG_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secrets
+                key: postgresql-username
+          - name: DAGSTER_PG_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secrets
+                key: postgresql-password
+        workspace:
+          servers:
+            - hosts: "trading-data"
+              port: 2020
+              name: "trading-data"
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+
+      dagsterDaemon:
+        env:
+          - name: DAGSTER_PG_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secrets
+                key: postgresql-username
+          - name: DAGSTER_PG_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: postgres-secrets
+                key: postgresql-password
+        envSecrets:
+          - name: postgres-secrets
+        runCoordinator:
+          config:
+            queueRunCoordinator:
+              maxConcurrentRuns: 6
+
+      runLauncher:
+        config:
+          celeryK8sLauncher:
+            imagePullPolicy: "Never"
+          k8sRunLauncher:
+            resources:
+              limits:
+                cpu: 500m
+                memory: 512Mi
+              requests:
+                cpu: 100m
+                memory: 128Mi
+            runK8sConfig:
+              containerConfig:
+                resources:
+                  limits:
+                    cpu: 200m
+                    memory: 256Mi
+            envVars:
+              - DAGSTER_PG_USERNAME
+              - DAGSTER_PG_PASSWORD
+
+      postgresql:
+        enabled: false
+        postgresqlHost: postgresql.database.svc.cluster.local
+        postgresqlDatabase: dagster
+
+      retention:
+        enabled: true

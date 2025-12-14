@@ -1,0 +1,19 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: dagster-ingress
+  namespace: dagster
+  annotations:
+    description: "Ingress route for dagster instance"
+    created-by: "kustomize-deployment"
+
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`dagster.homelab.lan`)
+      kind: Rule
+      services:
+        - name: dagster
+          port: 80
