@@ -15,5 +15,5 @@ spec:
     - match: Host(`dagster.homelab.lan`)
       kind: Rule
       services:
-        - name: dagster
+        - name: dagster-dagster-webserver
           port: 80

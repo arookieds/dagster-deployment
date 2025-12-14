@@ -26,7 +26,6 @@ def namespace-exists [name: string] {
 }
 
 let namespace: string = "dagster"
-let user: string = check-env-value ("DAGSTER_POSTGRESQL_USER")
 let password: string = check-env-value ("DAGSTER_POSTGRESQL_PASSWORD")
 
 if not (namespace-exists $namespace) {
@@ -41,7 +40,6 @@ if not ("sealed-secrets" | path exists) {
 print "Creating sealed secret for Dagster user..."
 (
   kubectl create secret generic postgres-secrets
-  --from-literal=$"postgresql-username=($user)"
   --from-literal=$"postgresql-password=($password)"
   -n $namespace
   --dry-run=client -o yaml |

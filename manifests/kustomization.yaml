@@ -6,7 +6,6 @@ namespace: dagster
 
 resources:
   - namespace.yaml
-  - dagster-instance-configmap.yaml
   - ingressroute.yaml
   - sealed-secrets/dagster-secrets-sealed.yaml
 
@@ -19,7 +18,6 @@ helmCharts:
     valuesInline:
       global:
         postgresqlSecretName: "postgres-secrets"
-        dagsterInstanceConfigMap: dagster-instance
 
       generatePostgresqlPasswordSecret: false
 
@@ -29,11 +27,6 @@ helmCharts:
 
       dagster-webserver:
         env:
-          - name: DAGSTER_PG_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secrets
-                key: postgresql-username
           - name: DAGSTER_PG_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -54,11 +47,6 @@ helmCharts:
 
       dagsterDaemon:
         env:
-          - name: DAGSTER_PG_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: postgres-secrets
-                key: postgresql-username
           - name: DAGSTER_PG_PASSWORD
             valueFrom:
               secretKeyRef:
@@ -90,13 +78,13 @@ helmCharts:
                     cpu: 200m
                     memory: 256Mi
             envVars:
-              - DAGSTER_PG_USERNAME
               - DAGSTER_PG_PASSWORD
 
       postgresql:
         enabled: false
         postgresqlHost: postgresql.database.svc.cluster.local
         postgresqlDatabase: dagster
+        postgresqlUsername: dagster
 
       retention:
         enabled: true
