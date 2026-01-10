@@ -12,7 +12,7 @@ resources:
 helmCharts:
   - name: dagster
     repo: https://dagster-io.github.io/helm
-    version: 1.12.6
+    version: 1.12.8
     releaseName: dagster
     namespace: dagster
     valuesInline:
@@ -25,7 +25,7 @@ helmCharts:
         enable: false
         deployments: []
 
-      dagster-webserver:
+      dagsterWebserver:
         env:
           - name: DAGSTER_PG_PASSWORD
             valueFrom:
@@ -33,14 +33,15 @@ helmCharts:
                 name: postgres-secrets
                 key: postgresql-password
         workspace:
+          enabled: true
           servers:
-            - hosts: "trading-data"
-              port: 2020
-              name: "trading-data"
+            - host: "crypto-data"
+              port: 3030
+              name: "crypto-data"
         resources:
           limits:
-            cpu: 500m
-            memory: 512Mi
+            cpu: 250m
+            memory: 256Mi
           requests:
             cpu: 100m
             memory: 128Mi
@@ -56,27 +57,31 @@ helmCharts:
           - name: postgres-secrets
         runCoordinator:
           config:
-            queueRunCoordinator:
+            queuedRunCoordinator:
               maxConcurrentRuns: 6
 
       runLauncher:
+        type: K8sRunLauncher
         config:
-          celeryK8sLauncher:
-            imagePullPolicy: "Never"
           k8sRunLauncher:
             resources:
               limits:
-                cpu: 500m
-                memory: 512Mi
+                cpu: 200m
+                memory: 256Mi
               requests:
                 cpu: 100m
                 memory: 128Mi
             runK8sConfig:
+              jobSpecConfig:
+                ttlSecondsAfterFinished: 600
               containerConfig:
                 resources:
                   limits:
-                    cpu: 200m
-                    memory: 256Mi
+                    cpu: 100m
+                    memory: 128Mi
+                  requests:
+                    cpu: 250m
+                    memory: 512Mi
             envVars:
               - DAGSTER_PG_PASSWORD
 
